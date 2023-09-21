@@ -3,6 +3,7 @@ package resp
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"strconv"
@@ -14,7 +15,6 @@ func Deserialize(reader io.Reader) (DataType, any, error) {
 	r := bufio.NewReader(reader)
 	line, err := readLine(r)
 	if err != nil && err != io.EOF {
-		slog.Error(err.Error())
 		return "", nil, err
 	}
 	dataType, data, err := extract(line, r)
@@ -38,13 +38,21 @@ func extract(line []byte, r *bufio.Reader) (DataType, any, error) {
 	case line[0] == ArrayPrefix:
 		return arrays(line, r)
 	default:
+		if len(line) > 0 {
+			inlineCommand := []byte{'+'}
+			inlineCommand = append(inlineCommand, line...)
+			return simpleString(inlineCommand)
+		}
 		return "", nil, ErrUnrecognizedType
 	}
 }
 
 func simpleString(data []byte) (DataType, string, error) {
-	if len(data) < 2 {
+	if len(data) < 1 {
 		return "", "", errors.New("no data available")
+	}
+	if len(data) < 2 {
+		return SimpleStrings, "", nil
 	}
 	return SimpleStrings, string(data[1:]), nil
 }
@@ -129,6 +137,9 @@ func arrays(data []byte, reader *bufio.Reader) (DataType, []ArrayItem, error) {
 
 func readLine(reader *bufio.Reader) ([]byte, error) {
 	line, err := reader.ReadBytes('\n')
+	if len(line) < 1 {
+		return nil, fmt.Errorf("empty line cannot process")
+	}
 	// skip the LF at end
 	line = line[:len(line)-1]
 	// skip if there is CR

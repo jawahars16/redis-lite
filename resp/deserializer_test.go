@@ -22,6 +22,12 @@ func Test_Deserialize(t *testing.T) {
 		expectedData:     "Hello",
 	}))
 
+	t.Run("Simple empty strings", testDeserialize(DeserializerTestCase{
+		input:            "+\r\n",
+		expectedDataType: resp.SimpleStrings,
+		expectedData:     "",
+	}))
+
 	t.Run("Simple errors", testDeserialize(DeserializerTestCase{
 		input:            "-Error\r\n",
 		expectedDataType: resp.SimpleErrors,
@@ -80,19 +86,6 @@ func Test_Deserialize(t *testing.T) {
 		input:            "*0\r\n\r\n",
 		expectedDataType: resp.Arrays,
 		expectedData:     []resp.ArrayItem{},
-	}))
-
-	// t.Run("Nil arrays", testDeserialize(DeserializerTestCase{
-	// 	input:            "*-1\r\n",
-	// 	expectedDataType: resp.Arrays,
-	// 	expectedData:     nil,
-	// }))
-
-	t.Run("Invalid", testDeserialize(DeserializerTestCase{
-		input:            "^Hello\r\n",
-		expectedDataType: "",
-		expectedData:     nil,
-		expectedError:    resp.ErrUnrecognizedType,
 	}))
 }
 

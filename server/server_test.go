@@ -15,7 +15,7 @@ func Test_ServerCommand(t *testing.T) {
 		pingHandlerInvoked <- true
 		return nil, nil
 	})
-	go redisLite.Listen("localhost:3000")
+	go redisLite.Listen("localhost", 3000)
 	defer redisLite.Close()
 	send([]byte("+PING\r\n"), "localhost:3000")
 
@@ -33,7 +33,7 @@ func Test_ServerCommandWithArgs(t *testing.T) {
 		pingHandlerInvoked <- true
 		return nil, nil
 	})
-	go redisLite.Listen("localhost:3000")
+	go redisLite.Listen("localhost", 3000)
 	defer redisLite.Close()
 	send([]byte("*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n"), "localhost:3000")
 
