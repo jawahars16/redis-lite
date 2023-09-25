@@ -11,7 +11,23 @@ https://codingchallenges.fyi/
 make run
 ```
 
-This runs the server on port 6379.
+This runs the server on port 6379. The port can be changed by passing the port number as an argument.
+
+```bash
+go run cmd/redis-lite/main.go -p 6379
+```
+
+The lite server can be accessed through redis CLI or redis-benchmark.
+
+```bash
+redis-cli PING
+```
+
+This lite version currently supports concurrent requests as well. It can be verified by below command,
+
+```
+redis-benchmark -t SET,GET
+```
 
 ## How to test
 
@@ -20,11 +36,3 @@ make test
 ```
 
 This includes unit and integration tests. Integration tests are executed against the server running on port 6379. The server is running using a docker container.
-
-## Benchmark
-
-This lite version currently supports concurrent requests as well. It can be verified by below command,
-
-```
-redis-benchmark -t SET,GET
-```
