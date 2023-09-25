@@ -44,13 +44,12 @@ func (r *RedisLite) Listen(ip string, port int) error {
 			slog.Error(err.Error())
 			return err
 		}
-		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second))
+		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second*3))
 		go func() {
 			r.handleConnection(ctx, conn)
 		}()
 		go func() {
 			<-ctx.Done()
-			fmt.Println("closing", ctx.Value("id"))
 			conn.Close()
 			cancel()
 		}()
@@ -61,7 +60,10 @@ func (r *RedisLite) handleConnection(ctx context.Context, conn *net.TCPConn) {
 	for {
 		dataType, data, err := resp.Deserialize(conn)
 		if err != nil {
-			// no data. keep reading
+			if err == io.EOF {
+				// no data. keep reading
+				conn.Close()
+			}
 			continue
 		}
 		switch dataType {
@@ -98,10 +100,8 @@ func (r *RedisLite) handleConnection(ctx context.Context, conn *net.TCPConn) {
 					writeError(err, conn)
 				}
 				conn.Write(data)
-				writeError(err, conn)
 				continue
 			}
-			fmt.Println("Processed", ctx.Value("id"))
 			conn.Write(bytes)
 		default:
 			writeError(resp.ErrUnrecognizedType, conn)

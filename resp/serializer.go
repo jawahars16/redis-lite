@@ -1,6 +1,7 @@
 package resp
 
 import (
+	"fmt"
 	"strconv"
 
 	"golang.org/x/exp/slog"
@@ -88,6 +89,11 @@ func serializeToArrays(input any) ([]byte, error) {
 			bytes []byte
 			err   error
 		)
+		if item.Value == nil {
+			item.Value = ""
+		}
+		item.Value = fmt.Sprintf("\"%s\"", item.Value)
+
 		switch item.DataType {
 		case SimpleStrings:
 			bytes, err = serializeToSimpleString(item.Value.(string))

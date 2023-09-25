@@ -22,8 +22,14 @@ func (d *simpleDictionary) Get(key string) (interface{}, bool) {
 	return v, ok
 }
 
+func newSimpleDictionary() *simpleDictionary {
+	return &simpleDictionary{
+		m: make(map[string]interface{}),
+	}
+}
+
 func Test_handlePing(t *testing.T) {
-	h := core.NewHandler(&simpleDictionary{m: make(map[string]interface{})})
+	h := core.NewHandler(newSimpleDictionary(), newSimpleDictionary())
 	bytes, err := h.Ping()
 	if err != nil {
 		t.Error(err)
@@ -37,7 +43,7 @@ func Test_handlePing(t *testing.T) {
 }
 
 func Test_handleSetWithNumber(t *testing.T) {
-	h := core.NewHandler(&simpleDictionary{m: make(map[string]interface{})})
+	h := core.NewHandler(newSimpleDictionary(), newSimpleDictionary())
 	bytes, err := h.Set("key", 1)
 	if err != nil {
 		t.Error(err)
@@ -51,7 +57,7 @@ func Test_handleSetWithNumber(t *testing.T) {
 }
 
 func Test_handleSetWithString(t *testing.T) {
-	h := core.NewHandler(&simpleDictionary{m: make(map[string]interface{})})
+	h := core.NewHandler(newSimpleDictionary(), newSimpleDictionary())
 	bytes, err := h.Set("key", "a")
 	if err != nil {
 		t.Error(err)
@@ -65,7 +71,7 @@ func Test_handleSetWithString(t *testing.T) {
 }
 
 func Test_handleGetWithString(t *testing.T) {
-	h := core.NewHandler(&simpleDictionary{m: make(map[string]interface{})})
+	h := core.NewHandler(newSimpleDictionary(), newSimpleDictionary())
 	h.Set("key", "1")
 	bytes, err := h.Get("key")
 	if err != nil {
@@ -80,7 +86,7 @@ func Test_handleGetWithString(t *testing.T) {
 }
 
 func Test_handleGetWithNumber(t *testing.T) {
-	h := core.NewHandler(&simpleDictionary{m: make(map[string]interface{})})
+	h := core.NewHandler(newSimpleDictionary(), newSimpleDictionary())
 	h.Set("key", 1)
 	bytes, err := h.Get("key")
 	if err != nil {
@@ -95,7 +101,7 @@ func Test_handleGetWithNumber(t *testing.T) {
 }
 
 func Test_handleIncr(t *testing.T) {
-	h := core.NewHandler(&simpleDictionary{m: make(map[string]interface{})})
+	h := core.NewHandler(newSimpleDictionary(), newSimpleDictionary())
 	h.Set("key", 1)
 	bytes, err := h.Incr("key")
 	if err != nil {
@@ -110,8 +116,8 @@ func Test_handleIncr(t *testing.T) {
 }
 
 func Test_handleConfig(t *testing.T) {
-	h := core.NewHandler(&simpleDictionary{m: make(map[string]interface{})})
-	bytes, err := h.Config("get", "save")
+	h := core.NewHandler(newSimpleDictionary(), newSimpleDictionary())
+	bytes, err := h.Config("save", "get")
 	if err != nil {
 		t.Error(err)
 	}

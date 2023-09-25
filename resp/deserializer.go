@@ -140,6 +140,9 @@ func readLine(reader *bufio.Reader) ([]byte, error) {
 	if len(line) < 1 {
 		return nil, fmt.Errorf("empty line cannot process")
 	}
+	if err != nil {
+		return line, err
+	}
 	// skip the LF at end
 	line = line[:len(line)-1]
 	// skip if there is CR

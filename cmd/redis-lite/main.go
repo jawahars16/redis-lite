@@ -15,7 +15,10 @@ func main() {
 	port := flag.Int("port", 6379, "Port to listen on")
 	flag.Parse()
 
-	handler := core.NewHandler(safemap.New())
+	config := safemap.New()
+	config.Set("appendonly", 0)
+	config.Set("save", nil)
+	handler := core.NewHandler(safemap.New(), config)
 	redisLite := server.New()
 
 	redisLite.Handle("PING", handler.Ping)

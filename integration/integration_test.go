@@ -61,8 +61,9 @@ func Test_RedisLiteConfigGetSave(t *testing.T) {
 		Addr: "localhost:6379",
 	})
 	cmd := client.ConfigGet(ctx, "save")
-	assert.Equal(t, "save", cmd.Val()[0])
-	assert.Equal(t, "\"\"", cmd.Val()[1])
+	data := cmd.Val()
+	assert.Equal(t, "save", data[0])
+	assert.Equal(t, "\"\"", data[1])
 }
 
 // persistence is disabled.
@@ -76,7 +77,6 @@ func Test_RedisLiteConfigGetAppendOnly(t *testing.T) {
 		Addr: "localhost:6379",
 	})
 	cmd := client.ConfigGet(ctx, "appendonly")
-	client.Pipeline()
 	assert.Equal(t, "appendonly", cmd.Val()[0])
 	assert.Equal(t, "no", cmd.Val()[1])
 }

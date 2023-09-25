@@ -10,7 +10,8 @@ import (
 )
 
 type Handler struct {
-	dictionary dictionary
+	data   dictionary
+	config dictionary
 }
 
 type dictionary interface {
@@ -18,9 +19,10 @@ type dictionary interface {
 	Get(key string) (any, bool)
 }
 
-func NewHandler(dictionary dictionary) *Handler {
+func NewHandler(data dictionary, config dictionary) *Handler {
 	return &Handler{
-		dictionary: dictionary,
+		data:   data,
+		config: config,
 	}
 }
 
@@ -36,10 +38,10 @@ func (h *Handler) Set(args ...any) ([]byte, error) {
 	v := args[1]
 	number, ok := toInt(v)
 	if ok {
-		h.dictionary.Set(key, number)
+		h.data.Set(key, number)
 		return resp.Serialize(resp.SimpleStrings, "OK")
 	}
-	h.dictionary.Set(key, v.(string))
+	h.data.Set(key, v.(string))
 	return resp.Serialize(resp.SimpleStrings, "OK")
 }
 
@@ -48,7 +50,10 @@ func (h *Handler) Get(args ...any) ([]byte, error) {
 		return nil, errors.New("wrong number of arguments for 'get' command")
 	}
 	key := args[0].(string)
-	v, _ := h.dictionary.Get(key)
+	v, exists := h.data.Get(key)
+	if !exists {
+		return resp.Serialize(resp.BulkStrings, nil)
+	}
 	number, ok := toInt(v)
 	if ok {
 		value := strconv.Itoa(number)
@@ -62,11 +67,11 @@ func (h *Handler) Incr(args ...any) ([]byte, error) {
 		return nil, errors.New("wrong number of arguments for 'incr' command")
 	}
 	key := args[0].(string)
-	v, _ := h.dictionary.Get(key)
+	v, _ := h.data.Get(key)
 	number, ok := toInt(v)
 	if ok {
 		number = number + 1
-		h.dictionary.Set(key, number)
+		h.data.Set(key, number)
 		return resp.Serialize(resp.Integers, number)
 	} else {
 		return nil, errors.New("value is not an integer or out of range")
@@ -81,34 +86,28 @@ func (h *Handler) Config(args ...any) ([]byte, error) {
 	if len(args) < 2 {
 		return nil, fmt.Errorf("wrong number of arguments for 'config|%s' command", cmd)
 	}
+	fmt.Println(cmd, args)
 	if strings.ToLower(cmd) == "get" {
-		option := args[1].(string)
-		switch strings.ToLower(option) {
-		case "save":
-			return resp.Serialize(resp.Arrays, []resp.ArrayItem{
-				{
-					Value:    "save",
-					DataType: resp.SimpleStrings,
-				},
-				{
-					Value:    "\"\"",
-					DataType: resp.SimpleStrings,
-				},
-			})
-		case "appendonly":
-			return resp.Serialize(resp.Arrays, []resp.ArrayItem{
-				{
-					Value:    "appendonly",
-					DataType: resp.SimpleStrings,
-				},
-				{
-					Value:    "no",
-					DataType: resp.SimpleStrings,
-				},
-			})
-		default:
-			return nil, fmt.Errorf("'config|get|%s' not implemented", option)
+		key := args[1].(string)
+		value, _ := h.config.Get(strings.ToLower(key))
+		var valueDataType resp.DataType
+		number, isNumber := toInt(value)
+		if isNumber {
+			valueDataType = resp.Integers
+			value = number
+		} else {
+			valueDataType = resp.SimpleStrings
 		}
+		return resp.Serialize(resp.Arrays, []resp.ArrayItem{
+			{
+				Value:    key,
+				DataType: resp.SimpleStrings,
+			},
+			{
+				Value:    value,
+				DataType: valueDataType,
+			},
+		})
 	}
 	return nil, fmt.Errorf("'config|%s' not implemented", cmd)
 }
