@@ -92,7 +92,7 @@ func serializeToArrays(input any) ([]byte, error) {
 		if item.Value == nil {
 			item.Value = ""
 		}
-		item.Value = fmt.Sprintf("\"%s\"", item.Value)
+		item.Value = fmt.Sprintf("%v", item.Value)
 
 		switch item.DataType {
 		case SimpleStrings:
@@ -106,9 +106,12 @@ func serializeToArrays(input any) ([]byte, error) {
 				slog.Error(err.Error())
 			}
 		case Integers:
-			bytes, err = serializeToInteger(item.Value.(int))
-			if err != nil {
-				slog.Error(err.Error())
+			number, ok := toInt(item.Value)
+			if ok {
+				bytes, err = serializeToInteger(number)
+				if err != nil {
+					slog.Error(err.Error())
+				}
 			}
 		case SimpleErrors:
 			bytes, err = serializeToSimpleError(item.Value.(string))
@@ -124,4 +127,20 @@ func serializeToArrays(input any) ([]byte, error) {
 	}
 
 	return result, nil
+}
+
+func toInt(value any) (int, bool) {
+	number, isNumber := value.(int)
+	if isNumber {
+		return number, true
+	}
+	str, isString := value.(string)
+	if isString {
+		number, err := strconv.Atoi(str)
+		if err != nil {
+			return 0, false
+		}
+		return number, true
+	}
+	return 0, false
 }

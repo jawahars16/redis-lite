@@ -1,5 +1,11 @@
 package safemap
 
+import (
+	"time"
+
+	"github.com/jawahars16/redis-lite/data/safemap/option"
+)
+
 type SafeMap struct {
 	m         map[string]interface{}
 	semaphore chan struct{}
@@ -12,14 +18,14 @@ func New() *SafeMap {
 	}
 }
 
-func (s *SafeMap) Set(key string, value interface{}) {
-	if key == "" {
-		return
+func (s *SafeMap) Set(key string, value interface{}, expiryOption *option.ExpiryOption) {
+	s.set(key, value)
+	if expiryOption != nil {
+		go func() {
+			<-time.After(expiryOption.Duration)
+			delete(s.m, key)
+		}()
 	}
-
-	s.semaphore <- struct{}{} // acquire lock
-	s.m[key] = value
-	<-s.semaphore
 }
 
 func (s *SafeMap) Get(key string) (interface{}, bool) {
@@ -29,4 +35,14 @@ func (s *SafeMap) Get(key string) (interface{}, bool) {
 
 	val, ok := s.m[key]
 	return val, ok
+}
+
+func (s *SafeMap) set(key string, value interface{}) {
+	if key == "" {
+		return
+	}
+
+	s.semaphore <- struct{}{} // acquire lock
+	s.m[key] = value
+	<-s.semaphore
 }

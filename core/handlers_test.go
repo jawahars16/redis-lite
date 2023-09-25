@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/jawahars16/redis-lite/core"
+	"github.com/jawahars16/redis-lite/data/safemap/option"
 	"github.com/jawahars16/redis-lite/resp"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,7 +14,7 @@ type simpleDictionary struct {
 	m map[string]interface{}
 }
 
-func (d *simpleDictionary) Set(key string, value interface{}) {
+func (d *simpleDictionary) Set(key string, value interface{}, expiry *option.ExpiryOption) {
 	d.m[key] = value
 }
 
@@ -117,7 +118,7 @@ func Test_handleIncr(t *testing.T) {
 
 func Test_handleConfig(t *testing.T) {
 	h := core.NewHandler(newSimpleDictionary(), newSimpleDictionary())
-	bytes, err := h.Config("save", "get")
+	bytes, err := h.Config("get", "save")
 	if err != nil {
 		t.Error(err)
 	}
@@ -129,6 +130,6 @@ func Test_handleConfig(t *testing.T) {
 	assert.Equal(t, resp.Arrays, dataType)
 	assert.Equal(t, "save", items[0].Value)
 	assert.Equal(t, resp.SimpleStrings, items[0].DataType)
-	assert.Equal(t, "\"\"", items[1].Value)
+	assert.Equal(t, "", items[1].Value)
 	assert.Equal(t, resp.SimpleStrings, items[1].DataType)
 }

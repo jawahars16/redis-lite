@@ -16,8 +16,8 @@ func main() {
 	flag.Parse()
 
 	config := safemap.New()
-	config.Set("appendonly", 0)
-	config.Set("save", nil)
+	config.Set("appendonly", "no", nil)
+	config.Set("save", nil, nil)
 	handler := core.NewHandler(safemap.New(), config)
 	redisLite := server.New()
 

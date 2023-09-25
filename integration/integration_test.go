@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
@@ -10,11 +11,16 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func Test_RedisLitePing(t *testing.T) {
-	ctx := context.Background()
-	container := bootstrap(ctx, t)
-	defer container.Terminate(ctx)
+var ctx context.Context
 
+func TestMain(m *testing.M) {
+	ctx = context.Background()
+	container := bootstrap(ctx)
+	m.Run()
+	container.Terminate(ctx)
+}
+
+func Test_RedisLitePing(t *testing.T) {
 	client := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 	})
@@ -24,10 +30,6 @@ func Test_RedisLitePing(t *testing.T) {
 }
 
 func Test_RedisLiteSet(t *testing.T) {
-	ctx := context.Background()
-	container := bootstrap(ctx, t)
-	defer container.Terminate(ctx)
-
 	client := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 	})
@@ -37,10 +39,6 @@ func Test_RedisLiteSet(t *testing.T) {
 }
 
 func Test_RedisLiteIncr(t *testing.T) {
-	ctx := context.Background()
-	container := bootstrap(ctx, t)
-	defer container.Terminate(ctx)
-
 	client := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 	})
@@ -53,26 +51,18 @@ func Test_RedisLiteIncr(t *testing.T) {
 // persistence is disabled.
 // following test will ensure that there is no snapshotting configured
 func Test_RedisLiteConfigGetSave(t *testing.T) {
-	ctx := context.Background()
-	container := bootstrap(ctx, t)
-	defer container.Terminate(ctx)
-
 	client := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 	})
 	cmd := client.ConfigGet(ctx, "save")
 	data := cmd.Val()
 	assert.Equal(t, "save", data[0])
-	assert.Equal(t, "\"\"", data[1])
+	assert.Equal(t, "", data[1])
 }
 
 // persistence is disabled.
 // following test will ensure that there is no AOF configured
 func Test_RedisLiteConfigGetAppendOnly(t *testing.T) {
-	ctx := context.Background()
-	container := bootstrap(ctx, t)
-	defer container.Terminate(ctx)
-
 	client := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 	})
@@ -81,7 +71,7 @@ func Test_RedisLiteConfigGetAppendOnly(t *testing.T) {
 	assert.Equal(t, "no", cmd.Val()[1])
 }
 
-func bootstrap(ctx context.Context, t *testing.T) testcontainers.Container {
+func bootstrap(ctx context.Context) testcontainers.Container {
 	request := testcontainers.ContainerRequest{
 		FromDockerfile: testcontainers.FromDockerfile{
 			Dockerfile: "./Dockerfile",
@@ -90,17 +80,17 @@ func bootstrap(ctx context.Context, t *testing.T) testcontainers.Container {
 		ExposedPorts: []string{"6379:6379/tcp"},
 		WaitingFor:   wait.ForLog("Ready to accept connections"),
 	}
-	container, error := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: request,
 		Started:          true,
 	})
-	if error != nil {
-		t.Fatal(error)
+	if err != nil {
+		log.Panic(err)
 	}
 
-	_, err := container.Host(ctx)
+	_, err = container.Host(ctx)
 	if err != nil {
-		t.Fatal(err)
+		log.Panic(err)
 	}
 	return container
 }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jawahars16/redis-lite/data/safemap/option"
 	"github.com/jawahars16/redis-lite/resp"
 )
 
@@ -15,7 +16,7 @@ type Handler struct {
 }
 
 type dictionary interface {
-	Set(key string, value any)
+	Set(key string, value any, expiry *option.ExpiryOption)
 	Get(key string) (any, bool)
 }
 
@@ -38,10 +39,10 @@ func (h *Handler) Set(args ...any) ([]byte, error) {
 	v := args[1]
 	number, ok := toInt(v)
 	if ok {
-		h.data.Set(key, number)
+		h.data.Set(key, number, nil)
 		return resp.Serialize(resp.SimpleStrings, "OK")
 	}
-	h.data.Set(key, v.(string))
+	h.data.Set(key, v.(string), nil)
 	return resp.Serialize(resp.SimpleStrings, "OK")
 }
 
@@ -71,7 +72,7 @@ func (h *Handler) Incr(args ...any) ([]byte, error) {
 	number, ok := toInt(v)
 	if ok {
 		number = number + 1
-		h.data.Set(key, number)
+		h.data.Set(key, number, nil)
 		return resp.Serialize(resp.Integers, number)
 	} else {
 		return nil, errors.New("value is not an integer or out of range")
@@ -90,14 +91,14 @@ func (h *Handler) Config(args ...any) ([]byte, error) {
 	if strings.ToLower(cmd) == "get" {
 		key := args[1].(string)
 		value, _ := h.config.Get(strings.ToLower(key))
-		var valueDataType resp.DataType
-		number, isNumber := toInt(value)
-		if isNumber {
-			valueDataType = resp.Integers
-			value = number
-		} else {
-			valueDataType = resp.SimpleStrings
-		}
+		// var valueDataType resp.DataType
+		// number, isNumber := toInt(value)
+		// if isNumber {
+		// 	valueDataType = resp.Integers
+		// 	value = number
+		// } else {
+		// 	valueDataType = resp.SimpleStrings
+		// }
 		return resp.Serialize(resp.Arrays, []resp.ArrayItem{
 			{
 				Value:    key,
@@ -105,7 +106,7 @@ func (h *Handler) Config(args ...any) ([]byte, error) {
 			},
 			{
 				Value:    value,
-				DataType: valueDataType,
+				DataType: resp.SimpleStrings,
 			},
 		})
 	}
