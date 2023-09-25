@@ -1,4 +1,5 @@
 # Redis Lite
+[![Continuous Integration](https://github.com/jawahars16/redis-lite/actions/workflows/test.yml/badge.svg)](https://github.com/jawahars16/redis-lite/actions/workflows/test.yml)
 
 This repo contains the lite version of redis server built with Golang. It supports very few commands (PING, SET, GET). The idea inspired from John Cricket's coding challenge. 
 
